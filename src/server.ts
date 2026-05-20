@@ -5,15 +5,7 @@ import { fileURLToPath } from "node:url";
 import express, { type NextFunction, type Request, type Response } from "express";
 import OpenAI from "openai";
 
-const supportedStyles = [
-  "default",
-  "slack",
-  "email",
-  "note",
-  "shorter",
-  "polite",
-  "direct",
-] as const;
+const supportedStyles = ["natural", "professional", "concise", "direct"] as const;
 
 const qualityToModel = {
   fast: "gpt-5.4-nano",
@@ -22,10 +14,21 @@ const qualityToModel = {
 } as const;
 
 const maxTextCharacters = 8_000;
-const openaiTimeoutMs = 20_000;
+const openaiTimeoutMs = 10_000;
 
 type PolishStyle = (typeof supportedStyles)[number];
 type PolishQuality = keyof typeof qualityToModel;
+
+const styleAliases = {
+  default: "natural",
+  slack: "professional",
+  email: "professional",
+  note: "natural",
+  shorter: "concise",
+  polite: "professional",
+  structured: "natural",
+  thorough: "professional",
+} as const satisfies Record<string, PolishStyle>;
 
 type PolishRequest = {
   text?: unknown;
@@ -34,13 +37,10 @@ type PolishRequest = {
 };
 
 const styleGuidance: Record<PolishStyle, string> = {
-  default: "Make the text clear, natural, and concise without changing the tone more than necessary.",
-  slack: "Make the text suitable for a short, friendly, practical Slack message.",
-  email: "Make the text suitable for a clear, professional email.",
-  note: "Make the text suitable for a concise personal or work note.",
-  shorter: "Make the text shorter while preserving the original meaning and important details.",
-  polite: "Make the text more polite while preserving the original meaning and strength of claims.",
-  direct: "Make the text more direct and practical while preserving the original meaning.",
+  natural: "Make the text clear, natural, friendly, and concise without changing the tone more than necessary.",
+  professional: "Make the text more professional and work-appropriate while keeping it clear and practical.",
+  concise: "Make the text shorter while preserving the original meaning and important details.",
+  direct: "Make the text more direct and practical while preserving the original meaning and without sounding rude.",
 };
 
 const openai = new OpenAI({
@@ -172,11 +172,11 @@ function parsePolishRequest(body: PolishRequest):
     return { ok: false, error: "`text` must be 8000 characters or fewer." };
   }
 
-  const style = body.style ?? "default";
-  if (!isSupportedStyle(style)) {
+  const style = resolveStyle(body.style ?? "natural");
+  if (!style) {
     return {
       ok: false,
-      error: "`style` must be one of: default, slack, email, note, shorter, polite, direct.",
+      error: "`style` must be one of: natural, professional, concise, direct.",
     };
   }
 
@@ -198,8 +198,16 @@ function parsePolishRequest(body: PolishRequest):
   };
 }
 
-function isSupportedStyle(value: unknown): value is PolishStyle {
-  return typeof value === "string" && supportedStyles.includes(value as PolishStyle);
+function resolveStyle(value: unknown): PolishStyle | undefined {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  if (supportedStyles.includes(value as PolishStyle)) {
+    return value as PolishStyle;
+  }
+
+  return styleAliases[value as keyof typeof styleAliases];
 }
 
 function isSupportedQuality(value: unknown): value is PolishQuality {
@@ -215,6 +223,7 @@ function buildSystemPrompt(style: PolishStyle) {
     "If the text is mixed, use the language that appears most.",
     "Preserve technical terms, names, Jira keys, PR links, API names, code identifiers, and error messages.",
     "Preserve the original meaning.",
+    "Preserve the original line breaks and list structure unless changing them clearly improves readability.",
     "Do not add extra context.",
     "Do not make claims stronger than the original.",
     "Return only the polished text.",
