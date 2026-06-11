@@ -1,13 +1,39 @@
 {
-  "name": "polishkit",
+  "name": "draftwise-ai",
   "version": "0.1.0",
+  "description": "Privacy-conscious AI writing refinement API for macOS and iOS Shortcuts.",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HAIXIN-ZHANG/DraftWise-AI.git"
+  },
+  "homepage": "https://github.com/HAIXIN-ZHANG/DraftWise-AI#readme",
+  "bugs": {
+    "url": "https://github.com/HAIXIN-ZHANG/DraftWise-AI/issues"
+  },
+  "keywords": [
+    "ai",
+    "writing",
+    "shortcuts",
+    "typescript",
+    "express",
+    "openai"
+  ],
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit && tsc -p scripts/tsconfig.json --noEmit",
+    "lint": "eslint \"{src,scripts,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,scripts,test}/**/*.ts\" --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "check": "eslint \"{src,scripts,test}/**/*.ts\" && prettier . --check && jest && tsc --noEmit && tsc -p tsconfig.test.json --noEmit && tsc -p scripts/tsconfig.json --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "benchmark": "tsx scripts/benchmark.ts"
   },
   "engines": {
     "node": ">=22",
@@ -16,12 +42,31 @@
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "openai": "^4.77.0"
+    "nanoid": "^3.3.8",
+    "object-hash": "^3.0.0",
+    "openai": "^4.77.0",
+    "tsscmp": "^1.0.6"
   },
   "devDependencies": {
-    "@types/express": "^5.0.0",
+    "@babel/core": "7.29.0",
+    "@babel/plugin-transform-modules-commonjs": "7.28.6",
+    "@babel/preset-typescript": "7.28.5",
+    "@eslint/js": "^10.0.1",
+    "@types/express": "^4.17.21",
+    "@types/jest": "28.1.8",
     "@types/node": "^22.10.2",
+    "@types/object-hash": "^3.0.6",
+    "@types/supertest": "6.0.3",
+    "@types/tsscmp": "^1.0.2",
+    "babel-jest": "28.1.3",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.6.0",
+    "jest": "28.1.3",
+    "prettier": "^3.8.3",
+    "supertest": "7.1.4",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.59.4"
   }
 }
